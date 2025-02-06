@@ -39,7 +39,7 @@ const PartsList = () => {
     isAvailable: true,
   });
 
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
   const totalPages = Math.ceil(parts.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -81,8 +81,8 @@ const PartsList = () => {
         typeProduct: part.typeProduct || "",
         category: part.category || "",
         value: part.value || "",
-        price: part.price?.toString() || "",
-        quantity: part.quantity?.toString() || "",
+        price: part.price ? String(part.price) : "0", // ✅ Always store as string
+        quantity: part.quantity ? String(part.quantity) : "0",
         isAvailable: part.isAvailable ?? true,
       });
     } else {
@@ -91,8 +91,8 @@ const PartsList = () => {
         typeProduct: "",
         category: "",
         value: "",
-        price: "",
-        quantity: "",
+        price: "0",
+        quantity: "0",
         isAvailable: true,
       });
     }
@@ -106,22 +106,43 @@ const PartsList = () => {
 
   const handleSavePart = async () => {
     try {
-      if (editPart) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/parts/${editPart.id}`, formData);
-      } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/parts`, formData);
-      }
-      fetchParts();
+      const filteredData = Object.fromEntries(
+        Object.entries(formData)
+          .filter(([, value]) => value !== "") // Remove empty fields
+          .map(([key, value]) => {
+            if (key === "price" || key === "quantity") return [key, parseFloat(value)]; // Convert to number
+            if (key === "isAvailable") return [key, Boolean(value)]; // Convert to boolean
+            return [key, value.toString().trim()]; // Ensure all values are strings and trimmed
+          })
+      );
+
+      const method = editPart
+        ? Object.keys(filteredData).length < Object.keys(formData).length
+          ? "patch"
+          : "put"
+        : "post";
+
+      const url = editPart
+        ? `${import.meta.env.VITE_API_URL}/api/parts/${editPart.id}`
+        : `${import.meta.env.VITE_API_URL}/api/parts`;
+
+      console.log("🔍 Data before sending:", formData);
+      console.log("📦 Filtered data (only filled fields):", filteredData);
+      console.log("🛠 Using method:", method.toUpperCase());
+
+      await axios[method](url, filteredData);
+
+      await fetchParts();
       handleCloseModal();
     } catch (error) {
-      console.error("Error saving part:", error);
+      console.error("❌ Error saving part:", error);
     }
   };
 
   const handleDeletePart = async (id: number) => {
     try {
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/parts/${id}`);
-      fetchParts();
+      await fetchParts();
     } catch (error) {
       console.error("Error deleting part:", error);
     }
@@ -166,7 +187,9 @@ const PartsList = () => {
                     <td className="border border-gray-300 px-4 py-2">{part.category}</td>
                     <td className="border border-gray-300 px-4 py-2">{part.value}</td>
                     <td className="border border-gray-300 px-4 py-2">{part.quantity}</td>
-                    <td className="border border-gray-300 px-4 py-2">{part.price.toFixed(2)} €</td>
+                    <td className="border border-gray-300 px-4 py-2">
+                      {Number(part.price).toFixed(2)} €
+                    </td>
                     <td className="border border-gray-300 px-4 py-2">
                       {part.isAvailable ? "✅" : "❌"}
                     </td>

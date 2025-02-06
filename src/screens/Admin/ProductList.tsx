@@ -98,15 +98,36 @@ const ProductList = () => {
   // Save new or edited product
   const handleSaveProduct = async () => {
     try {
-      if (editProduct) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${editProduct.id}`, formData);
-      } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/products`, formData);
-      }
-      fetchProducts();
+      const filteredData = Object.fromEntries(
+        Object.entries(formData)
+          .filter(([, value]) => value !== "") // Remove empty fields
+          .map(([key, value]) => {
+            if (key === "price") return [key, parseFloat(value)]; // Convert to number
+            if (key === "isAvailable") return [key, Boolean(value)]; // Convert to boolean
+            return [key, value.toString().trim()]; // Ensure all values are strings and trimmed
+          })
+      );
+
+      const method = editProduct
+        ? Object.keys(filteredData).length < Object.keys(formData).length
+          ? "patch"
+          : "put"
+        : "post";
+
+      const url = editProduct
+        ? `${import.meta.env.VITE_API_URL}/api/products/${editProduct.id}`
+        : `${import.meta.env.VITE_API_URL}/api/products`;
+
+      console.log("🔍 Data before sending:", formData);
+      console.log("📦 Filtered data (only filled fields):", filteredData);
+      console.log("🛠 Using method:", method.toUpperCase());
+
+      await axios[method](url, filteredData);
+
+      await fetchProducts();
       handleCloseModal();
     } catch (error) {
-      console.error("Error saving product:", error);
+      console.error("❌ Error saving product:", error);
     }
   };
 
