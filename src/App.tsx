@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import HomeScreen from "./screens/HomeScreen";
+import HomeScreen from "./screens/Clients/HomeScreen";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-// import ProductDetailScreen from "./screens/ProductDetailScreen";
-// import CartScreen from "./screens/CartScreen";
+import ProductDetailScreen from "./screens/Clients/ProductDetailScreen";
+import CartScreen from "./screens/Clients/CartScreen";
+import AdminScreen from "./screens/Admin/AdminScreen";
 
 function App() {
   return (
@@ -13,8 +14,9 @@ function App() {
         <main className="flex-grow">
           <Routes>
             <Route path="/" element={<HomeScreen />} />
-            {/* <Route path="/product/:id" element={<ProductDetailScreen />} />
-            <Route path="/cart" element={<CartScreen />} /> */}
+            <Route path="/product/:id" element={<ProductDetailScreen />} />
+            <Route path="/cart" element={<CartScreen />} />
+            <Route path="/admin" element={<AdminScreen />} />
           </Routes>
         </main>
         <Footer />

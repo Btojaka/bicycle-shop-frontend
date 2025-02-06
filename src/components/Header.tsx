@@ -11,7 +11,7 @@ const Header = () => {
           <span className="text-2xl font-bold">Sport Shop</span>
         </Link>
 
-        {/* Navegación */}
+        {/* Navigation */}
         <nav className="space-x-6">
           <Link to="/" className="hover:text-gray-300">
             Home
