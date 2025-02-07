@@ -400,7 +400,10 @@ const CartScreen = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold mb-6">My Cart</h1>
+      <h1 className="text-3xl font-bold mb-6" id="cart-title">
+        My Cart
+      </h1>
+      {/* Added ID to associate the heading with the cart for accessibility */}
 
       {cart.length > 0 ? (
         <>
@@ -410,7 +413,10 @@ const CartScreen = () => {
               const totalPrice = product.price + partsTotal;
 
               return (
-                <li key={index} className="border p-4 my-4 rounded-lg shadow-md bg-white">
+                <li
+                  key={index}
+                  className="bg-white shadow-md  shadow-blue-950 border-2 border-gray-500  p-4 my-4 rounded-lg"
+                >
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-lg font-semibold">{product.name}</h2>
@@ -437,10 +443,13 @@ const CartScreen = () => {
 
                     {/* Button to remove product */}
                     <button
-                      className="bg-red-500 text-white p-2 rounded-full hover:bg-red-700"
+                      className="bg-red-500 text-white p-3 rounded-full hover:bg-red-700"
                       onClick={() => removeFromCart(product.id)}
+                      aria-label={`Remove ${product.name} from cart`}
+                      // Provides a clear description for screen readers
                     >
-                      <TrashIcon className="h-6 w-6" />
+                      <TrashIcon className="h-6 w-6" aria-hidden="true" />
+                      {/* Marks the icon as decorative for screen readers */}
                     </button>
                   </div>
                 </li>
@@ -449,7 +458,8 @@ const CartScreen = () => {
           </ul>
 
           {/* Purchase summary */}
-          <div className="border p-4 my-4 rounded-lg shadow-md bg-white">
+
+          <div className="bg-white shadow-lg  shadow-blue-950 border-2 border-gray-500  p-4 my-4 rounded-lg">
             <p className="font-bold text-lg">Subtotal: {subtotal.toFixed(2)}€</p>
             <p className="text-gray-600">IVA (21%): {iva.toFixed(2)}€</p>
             <p className="font-bold text-xl">Total: {total.toFixed(2)}€</p>
@@ -461,6 +471,8 @@ const CartScreen = () => {
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
               onClick={() => navigate("/")}
+              aria-label="Continue shopping and browse more products"
+              // Adds clear action description for screen readers
             >
               Continue Shopping
             </button>
@@ -469,6 +481,9 @@ const CartScreen = () => {
             <button
               className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700"
               onClick={handleCheckout}
+              disabled={loadingCheckout}
+              aria-live="polite"
+              // Ensures screen readers announce checkout progress
             >
               {loadingCheckout ? (
                 <>
@@ -477,6 +492,8 @@ const CartScreen = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    role="status"
+                    // Marks spinner as a status update
                   >
                     <circle
                       className="opacity-25"
@@ -503,13 +520,18 @@ const CartScreen = () => {
             <button
               className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-800"
               onClick={clearCart}
+              aria-label="Clear all products from your cart"
+              // Clearly describes the action for screen readers
             >
               Clear Cart
             </button>
           </div>
         </>
       ) : (
-        <p className="text-gray-500">Your cart is empty.</p>
+        <p className="text-gray-500" role="alert">
+          Your cart is empty.
+        </p>
+        // Provides an alert for screen readers when the cart is empty
       )}
     </div>
   );

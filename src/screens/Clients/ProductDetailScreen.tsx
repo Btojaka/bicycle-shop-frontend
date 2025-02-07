@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import useCartStore from "../../store/cartStore";
 import socket from "../../helpers/socket";
+import { useProductStore } from "../../store/useProductStore"; // Import global product store
 
 interface Product {
   id: number;
@@ -24,6 +25,7 @@ interface Part {
 const ProductDetailScreen = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { restrictions } = useProductStore(); // Get restrictions from global store
   const [product, setProduct] = useState<Product | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
   const [selectedParts, setSelectedParts] = useState<Record<string, Part | null>>({}); // Record means object with string keys and Part values
@@ -67,7 +69,7 @@ const ProductDetailScreen = () => {
   useEffect(() => {
     if (!product) return;
 
-    // // Listen for updates to the current product
+    // Listen for updates to the current product
     socket.on("productUpdated", (updatedProduct) => {
       if (updatedProduct.id === product.id) {
         console.log("Updated product in real time:", updatedProduct);
@@ -157,6 +159,14 @@ const ProductDetailScreen = () => {
     }
     // Update the selected parts correctly
     setSelectedParts(updatedSelectedParts);
+  };
+
+  const productRestrictions = product ? restrictions[product.id] || {} : {};
+  console.log("productRestrictions", productRestrictions);
+
+  const isPartRestricted = (category: string, part: Part) => {
+    if (!productRestrictions[category]) return false;
+    return productRestrictions[category].includes(part.value);
   };
 
   const handleSelectPart = (category: string, part: Part) => {
@@ -303,28 +313,42 @@ const ProductDetailScreen = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       {loadingProduct ? (
-        <p className="text-center text-gray-500">🔄 Loading product details...</p>
-      ) : !product ? (
-        <p className="text-center text-red-500">Product not found</p>
+        <p className="text-center text-gray-500" role="status" aria-live="polite">
+          🔄 Loading product details...
+        </p>
+      ) : // role="status" and aria-live="polite" announce loading status
+      !product ? (
+        <p className="text-center text-red-500" role="alert">
+          Product not found
+        </p>
       ) : (
+        // role="alert" notify users of the error
         <>
           <h1 className="text-3xl font-bold mb-4">{product.name}</h1>
           <p className="text-lg text-gray-600">Type: {product.type}</p>
           <p className="text-lg font-bold">{product.price.toFixed(2)}€</p>
 
-          <h2 className="text-2xl font-semibold mt-6">Customize your {product.name}</h2>
+          <h2 className="text-2xl font-semibold mt-6">
+            Customize your <span className="sr-only">{product.name}</span>
+          </h2>
+          {/* sr-only -> product name is read but not visible for better context */}
 
           {orderedCategories.map((category) => (
             <div key={category} className="mt-4">
-              <label className="block text-lg font-medium">{category}:</label>
+              <label className="block text-lg font-medium" htmlFor={`select-${category}`}>
+                {category}:
+              </label>
+              {/* Added htmlFor to associate label with select */}
+
               <select
-                className="mt-1 p-2 border rounded w-full"
+                id={`select-${category}`}
+                className="bg-gray-200 text-gray-900 text-lg mt-1 p-2 border border-gray-400 rounded w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onChange={(e) => {
                   const selectedPart = parts.find((p) => p.id === Number(e.target.value));
                   if (selectedPart) handleSelectPart(category, selectedPart);
                 }}
               >
-                {/* Restrictions */}
+                {/* Restrictions in combination */}
                 <option value="">Select an option</option>
                 {groupedParts[category]?.map((part) => {
                   const isRestricted =
@@ -346,20 +370,29 @@ const ProductDetailScreen = () => {
                     <option
                       key={part.id}
                       value={part.id}
-                      disabled={!part.isAvailable || isRestricted}
+                      disabled={
+                        !part.isAvailable || isRestricted || isPartRestricted(category, part)
+                      }
                       className={part.isAvailable ? "text-gray-900" : "text-gray-400"}
+                      aria-disabled={
+                        !part.isAvailable || isRestricted || isPartRestricted(category, part)
+                      } // helps screen readers understand non-selectable options
                     >
                       {part.value} (+ {part.price.toFixed(2)} €){" "}
                       {!part.isAvailable && "(Temporarily out of stock)"}
                       {isRestricted && "(Restricted combination)"}
+                      {isPartRestricted(category, part) && "(Restricted in this product)"}
                     </option>
                   );
                 })}
               </select>
+
               {/* Message low available stock */}
               {groupedParts[category]?.filter((p) => p.quantity <= 5 && p.quantity > 0).length >
                 0 && (
-                <p className="text-red-500 text-sm mt-1">
+                <p className="text-red-500 text-sm mt-1" role="status" aria-live="polite">
+                  {" "}
+                  {/* aria-live ensures stock warnings are announced dynamically */}
                   ⚠️ Limited stock for:{" "}
                   {groupedParts[category]
                     ?.filter((p) => p.quantity <= 5 && p.quantity > 0 && p.isAvailable)
@@ -371,14 +404,19 @@ const ProductDetailScreen = () => {
           ))}
 
           <div className="flex justify-between mt-6">
-            <Link to="/" className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+            <Link
+              to="/"
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+              aria-label="Go back to the product list" // to improve clarity for screen readers
+            >
               ← Back to Products
             </Link>
-
             <button
               onClick={handleAddToCart}
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
               disabled={loadingAddToCart}
+              aria-live="polite"
+              aria-busy={loadingAddToCart}
             >
               {loadingAddToCart ? (
                 <>
@@ -387,6 +425,8 @@ const ProductDetailScreen = () => {
                     viewBox="0 0 24 24"
                     fill="none"
                     xmlns="http://www.w3.org/2000/svg"
+                    role="img"
+                    aria-label="Loading"
                   >
                     <circle
                       className="opacity-25"
