@@ -31,7 +31,7 @@ export const usePartStore = create<PartState>((set) => ({
       // Convert 'price' to a number when updating the state
       const formattedParts = response.data.map((part: Part) => ({
         ...part,
-        price: Number(part.price) || 0, // Convertimos 'price' a número, fallback a 0
+        price: Number(part.price) || 0, // fallback to 0
       }));
 
       set({ parts: formattedParts, loading: false });
