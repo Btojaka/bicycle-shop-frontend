@@ -32,12 +32,10 @@ export const useSoldProductsStore = create<SoldProductState>((set) => ({
   soldProducts: [],
   loading: false,
   error: null,
-
   fetchSoldProducts: async () => {
     set({ loading: true, error: null });
-
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/custom-products/`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/custom-products`);
       set({ soldProducts: response.data, loading: false });
     } catch (error: unknown) {
       if (error instanceof Error) {

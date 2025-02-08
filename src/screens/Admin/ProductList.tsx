@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useProductStore } from "../../store/useProductStore";
 import Pagination from "../../components/Pagination";
-import socket from "../../helpers/socket";
-import axios from "axios";
 import ProductModal from "../../components/ProductModal";
 import ConfirmModal from "../../components/ConfirmModal";
+import Filters from "../../components/Filters";
+import socket from "../../helpers/socket";
+import axios from "axios";
 
 interface Product {
   id: number;
@@ -23,7 +24,6 @@ interface ProductFormData {
 
 const ProductList = () => {
   const { products, fetchProducts, loading, error } = useProductStore();
-  const [isLoading, setIsLoading] = useState(loading);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,15 +37,40 @@ const ProductList = () => {
   });
 
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+  const [selectedType, setSelectedType] = useState("");
+  const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
+
+  // Memoize the list of unique product types
+  const productTypes = useMemo(() => {
+    return Array.from(new Set(products.map((product) => product.type)));
+  }, [products]);
+
+  // Memoize the filtered and sorted products
+  const filteredProducts = useMemo(() => {
+    let filtered = selectedType
+      ? products.filter((product) => product.type === selectedType)
+      : products;
+    if (priceOrder) {
+      filtered = [...filtered].sort((a, b) =>
+        priceOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+    return filtered;
+  }, [products, selectedType, priceOrder]);
+
+  const totalPages = useMemo(
+    () => Math.ceil(filteredProducts.length / itemsPerPage),
+    [filteredProducts.length, itemsPerPage]
+  );
+  const currentProducts = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   useEffect(() => {
     if (products.length === 0) {
-      setIsLoading(true);
-      fetchProducts().finally(() => setIsLoading(false));
+      fetchProducts();
     }
 
     // Listeners
@@ -124,7 +149,7 @@ const ProductList = () => {
       console.log("Using method:", method.toUpperCase(), "Data:", filteredData);
 
       const response = await axios[method](url, filteredData);
-      console.log("respuesta", response);
+
       await fetchProducts();
       handleCloseModal();
 
@@ -164,7 +189,7 @@ const ProductList = () => {
       >
         ➕ Add Product
       </button>
-      {isLoading ? (
+      {loading ? (
         <p className="text-gray-500" role="status">
           🔄 Loading products...
         </p> // Added role for screen readers
@@ -174,6 +199,14 @@ const ProductList = () => {
         </p> // Role alert for errors
       ) : (
         <>
+          {/* Filters Component*/}
+          <Filters
+            productTypes={productTypes}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            priceOrder={priceOrder}
+            setPriceOrder={setPriceOrder}
+          />
           <div className="overflow-x-auto">
             <table
               className="w-full border-collapse border border-gray-300"
@@ -266,16 +299,18 @@ const ProductList = () => {
         </>
       )}
       {/* Edit / Create Modal */}
-      <ProductModal
-        isOpen={modalOpen}
-        onClose={handleCloseModal}
-        formData={formData}
-        setFormData={setFormData}
-        onSave={handleSaveProduct}
-        productId={editProduct ? editProduct.id : null}
-      />
+      {modalOpen && (
+        <ProductModal
+          isOpen={modalOpen}
+          onClose={handleCloseModal}
+          formData={formData}
+          setFormData={setFormData}
+          onSave={handleSaveProduct}
+          productId={editProduct ? editProduct.id : null}
+        />
+      )}
     </div>
   );
 };
 
-export default ProductList;
+export default React.memo(ProductList);

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSoldProductsStore } from "../../store/useSoldProductStore";
 import Pagination from "../../components/Pagination";
 import Modal from "../../components/Modal";
+import Filters from "../../components/Filters";
 import ConfirmModal from "../../components/ConfirmModal";
 import socket from "../../helpers/socket";
 import axios from "axios";
+
 interface Part {
   id: number;
   category: string;
@@ -30,11 +32,35 @@ const SoldProducts = () => {
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedType, setSelectedType] = useState("");
+  const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
+
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(soldProducts.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = soldProducts.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Filter by type and price
+  const filteredProducts = useMemo(() => {
+    let result = selectedType
+      ? soldProducts.filter((product) => product.typeProduct === selectedType)
+      : soldProducts;
+
+    if (priceOrder) {
+      result = [...result].sort((a, b) =>
+        priceOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+    return result;
+  }, [soldProducts, selectedType, priceOrder]);
+
+  const totalPages = useMemo(
+    () => Math.ceil(filteredProducts.length / itemsPerPage),
+    [filteredProducts.length, itemsPerPage]
+  );
+
+  const currentProducts = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   useEffect(() => {
     fetchSoldProducts();
@@ -59,6 +85,12 @@ const SoldProducts = () => {
     };
   }, []);
 
+  // Save product types
+  const productTypes = useMemo(
+    () => [...new Set(soldProducts.map((product) => product.typeProduct))],
+    [soldProducts]
+  );
+
   // Function to delete a sold product
   const handleDeleteSoldProduct = async () => {
     if (confirmDeleteId === null) return;
@@ -74,7 +106,10 @@ const SoldProducts = () => {
     }
   };
 
-  const productToDelete = currentProducts.find((product) => product.id === confirmDeleteId);
+  const productToDelete = useMemo(
+    () => currentProducts.find((product) => product.id === confirmDeleteId),
+    [currentProducts, confirmDeleteId]
+  );
 
   return (
     <div>
@@ -94,6 +129,15 @@ const SoldProducts = () => {
       ) : (
         // Alerts the user about an error
         <>
+          {/* Filters Component*/}
+          <Filters
+            productTypes={productTypes}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            priceOrder={priceOrder}
+            setPriceOrder={setPriceOrder}
+          />
+
           <div className="overflow-x-auto">
             <table
               className="w-full border-collapse border border-gray-300"
@@ -208,4 +252,4 @@ const SoldProducts = () => {
   );
 };
 
-export default SoldProducts;
+export default React.memo(SoldProducts);

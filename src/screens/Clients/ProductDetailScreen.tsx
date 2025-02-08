@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import useCartStore from "../../store/cartStore";
 import socket from "../../helpers/socket";
-import { useProductStore } from "../../store/useProductStore"; // Import global product store
+import { useProductStore } from "../../store/useProductStore";
 
 interface Product {
   id: number;
@@ -28,7 +28,7 @@ const ProductDetailScreen = () => {
   const { restrictions } = useProductStore(); // Get restrictions from global store
   const [product, setProduct] = useState<Product | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
-  const [selectedParts, setSelectedParts] = useState<Record<string, Part | null>>({}); // Record means object with string keys and Part values
+  const [selectedParts, setSelectedParts] = useState<Record<string, Part | null>>({});
   const [loadingProduct, setLoadingProduct] = useState(true);
   const [loadingAddToCart, setLoadingAddToCart] = useState(false);
   const addToCart = useCartStore((state) => state.addToCart);
@@ -126,9 +126,15 @@ const ProductDetailScreen = () => {
 
   // Validations and restrictions
   useEffect(() => {
-    // Force update to revalidate the selection after any change
-    const allPartsSelected = orderedCategories.every((category) => selectedParts[category]);
+    const allPartsSelected =
+      Object.keys(selectedParts).length > 0 &&
+      orderedCategories.every((category) => selectedParts[category]);
+
     console.log("All parts selected after update:", allPartsSelected);
+  }, [selectedParts]);
+
+  useEffect(() => {
+    console.log("🔍 selectedParts has changed:", selectedParts);
   }, [selectedParts]);
 
   // Validate selections and update the selected parts
@@ -171,12 +177,14 @@ const ProductDetailScreen = () => {
 
   const handleSelectPart = (category: string, part: Part) => {
     validateSelections(category, part);
+    setSelectedParts((prev) => ({
+      ...prev,
+      [category]: part, // Update only the current category
+    }));
 
-    // Force update to revalidate the selection after any change
     setTimeout(() => {
-      const allPartsSelected = orderedCategories.every((category) => selectedParts[category]);
-      console.log("All parts selected after update:", allPartsSelected);
-    }, 0);
+      console.log("🔄 selectedParts después de la actualización:", selectedParts);
+    }, 500);
   };
 
   // Function to group parts by category
@@ -245,7 +253,8 @@ const ProductDetailScreen = () => {
 
         const cartItems = useCartStore.getState().cart;
         const countInCart = cartItems.reduce((sum, item) => {
-          return sum + (item.parts?.filter((p) => p.id === part.id).length || 0);
+          const totalCount = sum + (item.parts?.filter((p) => p.id === part.id).length || 0);
+          return totalCount;
         }, 0);
 
         // If the sum of the cart + new attempt is greater than the stock, block
@@ -292,21 +301,29 @@ const ProductDetailScreen = () => {
       }
 
       // Validate that all categories are selected after updating
-      const allPartsSelected = orderedCategories.every((category) => selectedParts[category]);
-      console.log("All parts selected before adding to cart:", allPartsSelected);
+      setTimeout(() => {
+        const hasPartsToSelect = parts.some((part) => part.category in groupedParts); // check if exist parts to associate
+        const allPartsSelected =
+          !hasPartsToSelect || orderedCategories.every((category) => selectedParts[category]);
 
-      // If not all parts are selected, show an alert
-      if (!allPartsSelected) {
-        alert(
-          "All categories must be selected without restrictions or unavailable values before adding to cart."
-        );
-        setLoadingAddToCart(false);
-        return;
-      }
+        console.log("All parts selected before adding to cart (after delay):", allPartsSelected);
 
-      const productToAdd = { ...product, parts: selectedPartsArray };
-      addToCart(productToAdd);
-      navigate("/cart");
+        if (!allPartsSelected) {
+          alert(
+            "All categories must be selected without restrictions or unavailable values before adding to cart."
+          );
+          setLoadingAddToCart(false);
+          return;
+        }
+
+        const productToAdd = {
+          ...product,
+          parts: selectedPartsArray,
+        };
+
+        addToCart(productToAdd);
+        navigate("/cart");
+      }, 0);
     }
   };
 

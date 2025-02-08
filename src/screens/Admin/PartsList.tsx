@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { usePartStore } from "../../store/usePartStore";
 import Pagination from "../../components/Pagination";
-import socket from "../../helpers/socket";
-import axios from "axios";
 import PartModal from "../../components/PartModal";
 import ConfirmModal from "../../components/ConfirmModal";
+import Filters from "../../components/Filters";
+import socket from "../../helpers/socket";
+import axios from "axios";
 
 interface Part {
   id: number;
@@ -27,7 +28,6 @@ interface PartFormData {
 
 const PartsList = () => {
   const { parts, fetchParts, loading, error } = usePartStore();
-  const [isLoading, setIsLoading] = useState(loading);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,26 +43,59 @@ const PartsList = () => {
   });
 
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(parts.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentParts = parts.slice(indexOfFirstItem, indexOfLastItem);
+  const [selectedType, setSelectedType] = useState("");
+  const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
+
+  // Filter by type
+  const filteredParts = useMemo(() => {
+    let result = selectedType ? parts.filter((part) => part.typeProduct === selectedType) : parts;
+
+    if (priceOrder) {
+      result = [...result].sort((a, b) =>
+        priceOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+
+    return result;
+  }, [parts, selectedType, priceOrder]);
+
+  const totalPages = useMemo(
+    () => Math.ceil(filteredParts.length / itemsPerPage),
+    [filteredParts, itemsPerPage]
+  );
+
+  const currentParts = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    return filteredParts.slice(indexOfFirstItem, indexOfLastItem);
+  }, [filteredParts, currentPage, itemsPerPage]);
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchParts().finally(() => setIsLoading(false));
+    if (parts.length === 0) {
+      fetchParts();
+    }
 
     // Listeners
     socket.on("partCreated", (newPart: Part) => {
-      usePartStore.setState((state) => ({
-        parts: [...state.parts, newPart],
-      }));
+      usePartStore.setState((state) => {
+        const alreadyExists = state.parts.some((part) => part.id === newPart.id);
+        if (alreadyExists) return state;
+
+        return {
+          parts: [...state.parts, newPart],
+        };
+      });
     });
 
     socket.on("partUpdated", (updatedPart: Part) => {
-      usePartStore.setState((state) => ({
-        parts: state.parts.map((part) => (part.id === updatedPart.id ? updatedPart : part)),
-      }));
+      usePartStore.setState((state) => {
+        const existingPart = state.parts.find((part) => part.id === updatedPart.id);
+        if (existingPart && JSON.stringify(existingPart) === JSON.stringify(updatedPart))
+          return state;
+        return {
+          parts: state.parts.map((part) => (part.id === updatedPart.id ? updatedPart : part)),
+        };
+      });
     });
 
     socket.on("partDeleted", ({ id }: { id: number }) => {
@@ -77,6 +110,9 @@ const PartsList = () => {
       socket.off("partDeleted");
     };
   }, []);
+
+  // Save product types
+  const productTypes = useMemo(() => [...new Set(parts.map((part) => part.typeProduct))], [parts]);
 
   const handleOpenModal = (part: Part | null = null) => {
     if (part) {
@@ -135,7 +171,6 @@ const PartsList = () => {
 
       await axios[method](url, filteredData);
 
-      await fetchParts();
       handleCloseModal();
     } catch (error) {
       console.error("Error saving part:", error);
@@ -157,7 +192,10 @@ const PartsList = () => {
     }
   };
   // Save item to delete
-  const partToDelete = parts.find((part) => part.id === confirmDeleteId);
+  const partToDelete = useMemo(
+    () => currentParts.find((part) => part.id === confirmDeleteId),
+    [currentParts, confirmDeleteId]
+  );
 
   return (
     <div>
@@ -172,7 +210,7 @@ const PartsList = () => {
       >
         ➕ Add Part
       </button>
-      {isLoading ? (
+      {loading ? (
         <p className="text-gray-500" role="status">
           🔄 Loading parts...
         </p> // Added role for loading feedback
@@ -182,6 +220,14 @@ const PartsList = () => {
         </p> // Added role for error messages
       ) : (
         <>
+          {/* Filters Component*/}
+          <Filters
+            productTypes={productTypes}
+            selectedType={selectedType}
+            setSelectedType={setSelectedType}
+            priceOrder={priceOrder}
+            setPriceOrder={setPriceOrder}
+          />
           <div className="overflow-x-auto">
             <table
               className="w-full border-collapse border border-gray-300"
@@ -280,15 +326,17 @@ const PartsList = () => {
         </>
       )}
       {/* Modal to create and edit */}
-      <PartModal
-        isOpen={modalOpen}
-        onClose={handleCloseModal}
-        formData={formData}
-        setFormData={setFormData}
-        onSave={handleSavePart}
-      />
+      {modalOpen && (
+        <PartModal
+          isOpen={modalOpen}
+          onClose={handleCloseModal}
+          formData={formData}
+          setFormData={setFormData}
+          onSave={handleSavePart}
+        />
+      )}
     </div>
   );
 };
 
-export default PartsList;
+export default React.memo(PartsList);

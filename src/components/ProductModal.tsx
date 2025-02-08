@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useProductStore } from "../store/useProductStore"; // Import the global product store
+import { useProductStore } from "../store/useProductStore";
 
 interface ProductFormData {
   name: string;
@@ -28,36 +28,37 @@ const ProductModal: React.FC<ProductModalProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [availableOptions, setAvailableOptions] = useState<
     Record<string, Record<string, string[]>>
-  >({});
-  const { restrictions, setRestrictions } = useProductStore();
-  const [selectedRestrictions, setSelectedRestrictions] = useState<{
-    [category: string]: string[];
-  }>(productId && restrictions[productId] ? restrictions[productId] : {});
+  >({}); //
 
+  const { restrictions, setRestrictions } = useProductStore();
+  const [hasFetchedOptions, setHasFetchedOptions] = useState(false); // Nuevo estado
+  const [tempRestrictions, setTempRestrictions] = useState<{ [category: string]: string[] }>({});
+  // Sincroniza restricciones cuando cambia el `productId`
   useEffect(() => {
-    console.log("productId :: ", productId);
     if (productId && restrictions[productId]) {
-      console.log("Setting selected restrictions:", restrictions[productId]);
-      setSelectedRestrictions(restrictions[productId]);
+      setTempRestrictions(restrictions[productId]);
     } else {
-      setSelectedRestrictions({});
+      setTempRestrictions({});
     }
   }, [productId, restrictions]);
 
   useEffect(() => {
+    if (!isOpen || hasFetchedOptions) return;
+
     const fetchAvailableOptions = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parts/options`);
         const data = await response.json();
-        console.log("Available Options from API:", data); // Debugging
+        console.log("Available Options from API:", data);
         setAvailableOptions(data);
+        setHasFetchedOptions(true); // to avoid more fetch
       } catch (error) {
         console.error("Error fetching available options:", error);
       }
     };
 
     fetchAvailableOptions();
-  }, []);
+  }, [isOpen]); // Only when modal is open
 
   if (!isOpen) return null;
 
@@ -71,23 +72,24 @@ const ProductModal: React.FC<ProductModalProps> = ({
           ? (e.target as HTMLInputElement).checked
           : name === "type"
             ? value.toLowerCase()
-            : value,
+            : name === "name"
+              ? value
+                  .toLowerCase()
+                  .split(" ")
+                  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                  .join(" ")
+              : value,
     }));
   };
 
   // Handle save with loading state
   const handleSaveClick = async () => {
     setIsSaving(true);
-
     try {
-      const response = await onSave(); // Ensure this function returns the new product if created
+      await onSave();
 
       if (productId) {
-        // If editing, use the existing productId
-        await setRestrictions(productId, selectedRestrictions);
-      } else if (response?.id) {
-        // If creating, use the new product's ID
-        await setRestrictions(response.id, selectedRestrictions);
+        await setRestrictions(productId, tempRestrictions);
       }
     } catch (error) {
       console.error("Error saving product or restrictions:", error);
@@ -98,20 +100,22 @@ const ProductModal: React.FC<ProductModalProps> = ({
 
   const handleAddRestriction = (category: string, option: string) => {
     if (!option) return;
-    setSelectedRestrictions((prev) => ({
+    if (!productId) return;
+
+    setTempRestrictions((prev) => ({
       ...prev,
       [category]: prev[category] ? [...prev[category], option] : [option],
     }));
   };
 
   const handleRemoveRestriction = (category: string, option: string) => {
-    setSelectedRestrictions((prev) => ({
+    if (!productId) return;
+
+    setTempRestrictions((prev) => ({
       ...prev,
-      [category]: prev[category].filter((item) => item !== option),
+      [category]: prev[category]?.filter((item) => item !== option) || [],
     }));
   };
-
-  console.log("Rendering Restrictions, availableOptions:", availableOptions);
 
   return (
     <div
@@ -149,6 +153,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               placeholder="Product name"
               disabled={isSaving}
               aria-disabled={isSaving} // Accessibility: Marks as disabled when saving
+              autoComplete="off"
             />
           </div>
 
@@ -167,6 +172,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               placeholder="Product type"
               disabled={isSaving}
               aria-disabled={isSaving}
+              autoComplete="off"
             />
           </div>
 
@@ -185,6 +191,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               placeholder="Product price"
               disabled={isSaving}
               aria-disabled={isSaving}
+              autoComplete="off"
             />
           </div>
 
@@ -199,6 +206,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
               className="mr-2"
               disabled={isSaving}
               aria-disabled={isSaving}
+              autoComplete="off"
             />
             <label htmlFor="isAvailable" className="text-gray-700">
               Available
@@ -215,7 +223,7 @@ const ProductModal: React.FC<ProductModalProps> = ({
                 <div key={category} className="mt-2">
                   <span className="font-semibold">{category}:</span>
                   <ul className="list-disc pl-5 text-gray-700">
-                    {selectedRestrictions[category]?.map((restriction, index) => (
+                    {tempRestrictions[category]?.map((restriction, index) => (
                       <li key={index}>
                         {restriction}
                         <button
@@ -229,15 +237,15 @@ const ProductModal: React.FC<ProductModalProps> = ({
                   </ul>
                   {/* Add new restriction */}
                   <select
+                    id={`restriction-${category}`} // Añadimos un id único
+                    name={`restriction-${category}`}
                     className="border p-2 rounded mt-2 w-full"
                     onChange={(e) => handleAddRestriction(category, e.target.value)}
                   >
                     <option value="">Select restriction</option>
                     {Array.isArray(options)
                       ? options
-                          .filter(
-                            (option: string) => !selectedRestrictions[category]?.includes(option)
-                          )
+                          .filter((option: string) => !tempRestrictions[category]?.includes(option))
                           .map((option: string) => (
                             <option key={option} value={option}>
                               {option}
@@ -283,4 +291,4 @@ const ProductModal: React.FC<ProductModalProps> = ({
   );
 };
 
-export default ProductModal;
+export default React.memo(ProductModal);
