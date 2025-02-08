@@ -349,6 +349,7 @@ const CartScreen = () => {
         );
 
         console.log("Custom Product created:", customProduct);
+        socket.emit("customProductCreated", customProduct);
       }
 
       // Clear cart and redirect hom first

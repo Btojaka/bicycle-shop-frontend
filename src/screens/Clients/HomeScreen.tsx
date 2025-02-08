@@ -1,29 +1,38 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import socket from "../../helpers/socket";
 import { useProductStore } from "../../store/useProductStore";
+import Filters from "../../components/Filters";
 
 const HomeScreen = () => {
   const { products, fetchProducts, loading } = useProductStore();
   const [selectedType, setSelectedType] = useState(""); // State for the filter
+  const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
 
-  const availableProducts = products.filter((product) => product.isAvailable); // Only availables
-
-  const filteredProducts = selectedType
-    ? availableProducts.filter((product) => product.type === selectedType) // Filter type
-    : availableProducts;
-
-  const [productTypes, setProductTypes] = useState<string[]>([]);
-
-  // Extract unique product types when products change
-  useEffect(() => {
-    const uniqueTypes = Array.from(new Set(products.map((product) => product.type)));
-    setProductTypes(uniqueTypes);
+  // Memoize product types
+  const productTypes = useMemo(() => {
+    return Array.from(new Set(products.map((product) => product.type)));
   }, [products]);
+
+  // Only filter products if `products`, `selectedType`, or `priceOrder` change
+  const filteredProducts = useMemo(() => {
+    let availableProducts = products.filter((product) => product.isAvailable);
+    if (selectedType) {
+      availableProducts = availableProducts.filter((product) => product.type === selectedType);
+    }
+    if (priceOrder) {
+      availableProducts = [...availableProducts].sort((a, b) =>
+        priceOrder === "asc" ? a.price - b.price : b.price - a.price
+      );
+    }
+    return availableProducts;
+  }, [products, selectedType, priceOrder]);
 
   // Get data from the store
   useEffect(() => {
-    fetchProducts(); // Fetch products once when mounts and then only when needed
+    if (products.length === 0) {
+      fetchProducts();
+    }
 
     // Listen for product creation
     socket.on("productCreated", (newProduct) => {
@@ -64,30 +73,19 @@ const HomeScreen = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <h1 className="text-3xl font-bold mb-6 text-center" id="products-title">
+        {" "}
+        {/* id for better association with screen readers */}
         Available Products
       </h1>
-      {/* Added ID for better association with screen readers */}
 
-      <div className="mb-4 flex justify-center">
-        <label htmlFor="product-filter" className="sr-only">
-          Filter products by type
-        </label>
-        {/* Added a label for screen readers to describe the select input */}
-
-        <select
-          id="product-filter"
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          className="bg-gray-200 text-gray-900 text-lg border border-gray-400 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">All Products</option>
-          {productTypes.map((type) => (
-            <option key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Filters Component*/}
+      <Filters
+        productTypes={productTypes}
+        selectedType={selectedType}
+        setSelectedType={setSelectedType}
+        priceOrder={priceOrder}
+        setPriceOrder={setPriceOrder}
+      />
 
       {loading ? (
         <p className="text-center text-gray-500" role="alert">
@@ -129,4 +127,4 @@ const HomeScreen = () => {
   );
 };
 
-export default HomeScreen;
+export default React.memo(HomeScreen);
