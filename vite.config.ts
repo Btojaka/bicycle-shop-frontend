@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     "import.meta.env.VITE_API_URL": JSON.stringify(
-      "postgresql://postgres:dQBzoIofBVEtRSvFRFgaYqpmGsjIMmaL@autorack.proxy.rlwy.net:27709/railway"
+      "https://github.com/Btojaka/bicycle-shop-backend"
     ),
   },
   test: {
