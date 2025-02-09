@@ -4,10 +4,11 @@ import "vitest/config";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/bicycle-shop-frontend/",
   plugins: [react()],
   define: {
     "import.meta.env.VITE_API_URL": JSON.stringify(
-      "http://bicycle-shop-backend-production.up.railway.app"
+      "https://bicycle-shop-backend-production.up.railway.app"
     ),
   },
   test: {
@@ -15,5 +16,4 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
   },
-  base: "/bicycle-shop-frontend/",
 });
