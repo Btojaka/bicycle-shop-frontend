@@ -5,6 +5,11 @@ import "vitest/config";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    "import.meta.env.VITE_API_URL": JSON.stringify(
+      "postgresql://postgres:dQBzoIofBVEtRSvFRFgaYqpmGsjIMmaL@autorack.proxy.rlwy.net:27709/railway"
+    ),
+  },
   test: {
     globals: true,
     environment: "jsdom",
