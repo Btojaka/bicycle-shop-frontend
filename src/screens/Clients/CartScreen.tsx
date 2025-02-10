@@ -67,7 +67,7 @@ const CartScreen = () => {
         return {}; // No more changes
       });
       if (shouldRedirect) {
-        navigate("/");
+        navigate("/bicycle-shop-frontend/");
       }
     });
 
@@ -77,7 +77,7 @@ const CartScreen = () => {
         cart: state.cart.filter((product) => product.id !== id),
       }));
       alert(`The product in your cart has been removed because it is no longer available.`);
-      navigate("/"); // Redirect Home
+      navigate("/bicycle-shop-frontend/"); // Redirect Home
     });
 
     // Listen for part updates
@@ -129,7 +129,7 @@ const CartScreen = () => {
 
             // If multiple products were removed, redirect to HOME
             if (productsRemoved > 1) {
-              navigate("/");
+              navigate("/bicycle-shop-frontend/");
             } else if (productIdToRedirect) {
               navigate(`/product/${productIdToRedirect}`); // Redirect to the affected product
             }
@@ -190,7 +190,7 @@ const CartScreen = () => {
 
       // Redirect: If more than one product is affected, go to Home. Otherwise, go to product details.
       if (affectedProducts.length > 1) {
-        navigate("/");
+        navigate("/bicycle-shop-frontend/");
       } else {
         navigate(`/product/${affectedProducts[0].product.id}`);
       }
@@ -240,7 +240,7 @@ const CartScreen = () => {
           updatedCart = updatedCart.filter((p) => p.id !== item.id);
           removeItem = true;
           stockChanged = true;
-          redirectTo = "/"; // Redirect to home if the product is no longer available
+          redirectTo = "/bicycle-shop-frontend/"; // Redirect to home if the product is no longer available
           removedProducts.push({ name: item.name });
           continue;
         }
@@ -355,7 +355,7 @@ const CartScreen = () => {
       // Clear cart and redirect hom first
       useCartStore.setState({ cart: [] });
       alert("Order completed successfully!\nThank you for your purchase.");
-      navigate("/");
+      navigate("/bicycle-shop-frontend/");
 
       // Once redirected, update the stock
       setTimeout(async () => {
@@ -471,7 +471,7 @@ const CartScreen = () => {
             {/* Continue Shopping button */}
             <button
               className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/bicycle-shop-frontend/")}
               aria-label="Continue shopping and browse more products"
               // Adds clear action description for screen readers
             >

@@ -81,7 +81,7 @@ const ProductDetailScreen = () => {
     socket.on("productDeleted", ({ id }) => {
       if (id === product.id) {
         alert("This product has been deleted. You will be redirected to the homepage.");
-        navigate("/"); // Redirect to home
+        navigate("/bicycle-shop-frontend/"); // Redirect to home
       }
     });
 
@@ -422,7 +422,7 @@ const ProductDetailScreen = () => {
 
           <div className="flex justify-between mt-6">
             <Link
-              to="/"
+              to="/bicycle-shop-frontend/"
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
               aria-label="Go back to the product list" // to improve clarity for screen readers
             >
