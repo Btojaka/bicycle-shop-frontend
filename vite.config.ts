@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     "import.meta.env.VITE_API_URL": JSON.stringify(
-      "https://bicycle-shop-backend-production.up.railway.app"
+      "https://bicycle-shop-backend-jqz7.onrender.com"
     ),
   },
   test: {
