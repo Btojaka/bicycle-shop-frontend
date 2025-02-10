@@ -54,10 +54,15 @@ The project does not require a .env file since it directly points to the backend
 
 This frontend interacts with the **Bicycle Shop Backend**, available at:
 
-🔗 **Backend Repository:** [Bicycle Shop - Backend](https://github.com/Btojaka/bicycle-shop-backend)  
-🛄️ **Database:** Hosted on **Railway**  
-🛡️ **API Base URL:** `https://bicycle-shop-backend-jqz7.onrender.com/api/products`
-📝 **API Documentation:** `https://bicycle-shop-backend-jqz7.onrender.com/docs`
+🔗 **Backend Repository:** [Bicycle Shop - Backend](https://github.com/Btojaka/bicycle-shop-backend)
+
+🛄️ **Database:** Hosted on **Railway**
+
+🛡️ **API Base URL:**
+[API Base URL](https://bicycle-shop-backend-jqz7.onrender.com/api/products)
+
+📝 **API Documentation:**
+[API Documentation](https://bicycle-shop-backend-jqz7.onrender.com/docs)
 
 ---
 
