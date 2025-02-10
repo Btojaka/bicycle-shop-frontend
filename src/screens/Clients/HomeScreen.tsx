@@ -10,12 +10,15 @@ const HomeScreen = () => {
   const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
 
   // Memoize product types
-  const productTypes = useMemo(() => {
-    return Array.from(new Set(products.map((product) => product.type)));
-  }, [products]);
+  const productTypes = useMemo(
+    () => [...new Set((Array.isArray(products) ? products : []).map((product) => product.type))],
+    [products]
+  );
 
   // Only filter products if `products`, `selectedType`, or `priceOrder` change
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
     let availableProducts = products.filter((product) => product.isAvailable);
     if (selectedType) {
       availableProducts = availableProducts.filter((product) => product.type === selectedType);
@@ -92,7 +95,7 @@ const HomeScreen = () => {
           🔄 Loading products...
         </p>
       ) : // Added role="alert" so screen readers announce loading status
-      products.length > 0 ? (
+      filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
             <div
@@ -119,7 +122,7 @@ const HomeScreen = () => {
         </div>
       ) : (
         <p className="text-center text-gray-500" role="alert">
-          No available products at the moment.
+          No available products now, sorry.
         </p>
         // Role alert to ensure screen readers announce when there are no products
       )}

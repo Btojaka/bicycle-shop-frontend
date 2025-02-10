@@ -31,9 +31,9 @@ const ProductModal: React.FC<ProductModalProps> = ({
   >({}); //
 
   const { restrictions, setRestrictions } = useProductStore();
-  const [hasFetchedOptions, setHasFetchedOptions] = useState(false); // Nuevo estado
+  const [hasFetchedOptions, setHasFetchedOptions] = useState(false);
   const [tempRestrictions, setTempRestrictions] = useState<{ [category: string]: string[] }>({});
-  // Sincroniza restricciones cuando cambia el `productId`
+
   useEffect(() => {
     if (productId && restrictions[productId]) {
       setTempRestrictions(restrictions[productId]);

@@ -6,7 +6,7 @@ const Header = () => {
     <header className="bg-gray-900 text-white p-4">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo with accessible link */}
-        <Link to="/" className="flex items-center space-x-2">
+        <Link to="/bicycle-shop-frontend/" className="flex items-center space-x-2">
           <img
             src={Logo}
             alt="Bicycle Shop Logo" // Descriptive alt text for screen readers
@@ -19,7 +19,7 @@ const Header = () => {
 
         {/* Navigation with role */}
         <nav className="space-x-6" role="navigation" aria-label="Main Navigation">
-          <Link to="/" className="hover:text-gray-300">
+          <Link to="/bicycle-shop-frontend/" className="hover:text-gray-300">
             Home
           </Link>
           <Link to="/cart" className="hover:text-gray-300">

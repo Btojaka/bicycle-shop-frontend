@@ -13,7 +13,7 @@ function App() {
         <Header />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<HomeScreen />} />
+            <Route path="/bicycle-shop-frontend/" element={<HomeScreen />} />
             <Route path="/product/:id" element={<ProductDetailScreen />} />
             <Route path="/cart" element={<CartScreen />} />
             <Route path="/admin" element={<AdminScreen />} />

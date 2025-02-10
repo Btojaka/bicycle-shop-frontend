@@ -41,12 +41,15 @@ const ProductList = () => {
   const [priceOrder, setPriceOrder] = useState<"asc" | "desc" | "">("");
 
   // Memoize the list of unique product types
-  const productTypes = useMemo(() => {
-    return Array.from(new Set(products.map((product) => product.type)));
-  }, [products]);
+  const productTypes = useMemo(
+    () => [...new Set((Array.isArray(products) ? products : []).map((product) => product.type))],
+    [products]
+  );
 
   // Memoize the filtered and sorted products
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+
     let filtered = selectedType
       ? products.filter((product) => product.type === selectedType)
       : products;
@@ -62,9 +65,13 @@ const ProductList = () => {
     () => Math.ceil(filteredProducts.length / itemsPerPage),
     [filteredProducts.length, itemsPerPage]
   );
+
   const currentProducts = useMemo(() => {
-    const indexOfLastItem = currentPage * itemsPerPage;
+    if (!Array.isArray(filteredProducts) || filteredProducts.length === 0) return [];
+
+    const indexOfLastItem = Math.min(currentPage * itemsPerPage, filteredProducts.length);
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
     return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
   }, [filteredProducts, currentPage, itemsPerPage]);
 
@@ -236,46 +243,56 @@ const ProductList = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentProducts.map((product) => (
-                  <tr key={product.id} className="text-center" role="row">
-                    <td className="border border-gray-300 px-4 py-2">{product.id}</td>
-                    <td className="border border-gray-300 px-4 py-2">{product.name}</td>
-                    <td className="border border-gray-300 px-4 py-2 capitalize">{product.type}</td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {product.price.toFixed(2)} €
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {product.isAvailable ? "✅" : "❌"}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <div className="flex flex-wrap justify-center gap-2">
-                        <button
-                          className="bg-blue-500 text-white px-2 sm:px-3 py-1 text-sm sm:text-base rounded hover:bg-blue-600"
-                          onClick={() => handleOpenModal(product)}
-                          aria-label={`Edit product ${product.name}`} // Added aria-label for clarity
-                        >
-                          ✏️ Edit
-                        </button>
+                {currentProducts.length > 0 ? (
+                  currentProducts.map((product) => (
+                    <tr key={product.id} className="text-center" role="row">
+                      <td className="border border-gray-300 px-4 py-2">{product.id}</td>
+                      <td className="border border-gray-300 px-4 py-2">{product.name}</td>
+                      <td className="border border-gray-300 px-4 py-2 capitalize">
+                        {product.type}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {product.price.toFixed(2)} €
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {product.isAvailable ? "✅" : "❌"}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <div className="flex flex-wrap justify-center gap-2">
+                          <button
+                            className="bg-blue-500 text-white px-2 sm:px-3 py-1 text-sm sm:text-base rounded hover:bg-blue-600"
+                            onClick={() => handleOpenModal(product)}
+                            aria-label={`Edit product ${product.name}`} // Added aria-label for clarity
+                          >
+                            ✏️ Edit
+                          </button>
 
-                        <button
-                          className="bg-red-500 text-white px-2 sm:px-3 py-1 text-sm sm:text-base rounded hover:bg-red-600"
-                          onClick={() => setConfirmDeleteId(product.id)}
-                          disabled={isDeleting === product.id}
-                          aria-label={`Delete product ${product.name}`} // Added aria-label for deletion
-                        >
-                          {isDeleting === product.id ? (
-                            <div
-                              className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
-                              aria-hidden="true" // Added aria-hidden to avoid redundant screen reader announcements
-                            ></div>
-                          ) : (
-                            "🗑️ Delete"
-                          )}
-                        </button>
-                      </div>
+                          <button
+                            className="bg-red-500 text-white px-2 sm:px-3 py-1 text-sm sm:text-base rounded hover:bg-red-600"
+                            onClick={() => setConfirmDeleteId(product.id)}
+                            disabled={isDeleting === product.id}
+                            aria-label={`Delete product ${product.name}`} // Added aria-label for deletion
+                          >
+                            {isDeleting === product.id ? (
+                              <div
+                                className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
+                                aria-hidden="true" // Added aria-hidden to avoid redundant screen reader announcements
+                              ></div>
+                            ) : (
+                              "🗑️ Delete"
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center text-gray-500 py-4">
+                      No products available now.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
             {/* Confirm modal in deletion */}

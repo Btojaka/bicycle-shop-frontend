@@ -39,6 +39,8 @@ const SoldProducts = () => {
 
   // Filter by type and price
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(soldProducts)) return [];
+
     let result = selectedType
       ? soldProducts.filter((product) => product.typeProduct === selectedType)
       : soldProducts;
@@ -48,6 +50,7 @@ const SoldProducts = () => {
         priceOrder === "asc" ? a.price - b.price : b.price - a.price
       );
     }
+
     return result;
   }, [soldProducts, selectedType, priceOrder]);
 
@@ -57,8 +60,11 @@ const SoldProducts = () => {
   );
 
   const currentProducts = useMemo(() => {
-    const indexOfLastItem = currentPage * itemsPerPage;
+    if (!Array.isArray(filteredProducts) || filteredProducts.length === 0) return [];
+
+    const indexOfLastItem = Math.min(currentPage * itemsPerPage, filteredProducts.length);
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
     return filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
   }, [filteredProducts, currentPage, itemsPerPage]);
 
@@ -87,7 +93,11 @@ const SoldProducts = () => {
 
   // Save product types
   const productTypes = useMemo(
-    () => [...new Set(soldProducts.map((product) => product.typeProduct))],
+    () => [
+      ...new Set(
+        (Array.isArray(soldProducts) ? soldProducts : []).map((product) => product.typeProduct)
+      ),
+    ],
     [soldProducts]
   );
 
@@ -170,46 +180,54 @@ const SoldProducts = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentProducts.map((product) => (
-                  <tr key={product.id} className="text-center" role="row">
-                    <td className="border border-gray-300 px-4 py-2">{product.id}</td>
-                    <td className="border border-gray-300 px-4 py-2">{product.name}</td>
-                    <td className="border border-gray-300 px-4 py-2 capitalize">
-                      {product.typeProduct}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {product.price.toFixed(2)} €
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {new Date(product.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                        onClick={() => setModalProduct(product)}
-                        aria-label={`Show parts for ${product.name}`} // Provides a clear label for screen readers
-                      >
-                        Show Parts
-                      </button>
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <button
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                        onClick={() => setConfirmDeleteId(product.id)}
-                        disabled={isDeleting === product.id}
-                        aria-label={`Delete sold product ${product.name}`} // Adds context for screen readers
-                      >
-                        {isDeleting === product.id ? (
-                          <div
-                            className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
-                            aria-hidden="true" // Prevents unnecessary screen reader announcement
-                          ></div>
-                        ) : null}
-                        {isDeleting === product.id ? "Deleting..." : "🗑️ Delete"}
-                      </button>
+                {currentProducts.length > 0 ? (
+                  currentProducts.map((product) => (
+                    <tr key={product.id} className="text-center" role="row">
+                      <td className="border border-gray-300 px-4 py-2">{product.id}</td>
+                      <td className="border border-gray-300 px-4 py-2">{product.name}</td>
+                      <td className="border border-gray-300 px-4 py-2 capitalize">
+                        {product.typeProduct}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {product.price.toFixed(2)} €
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {new Date(product.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <button
+                          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                          onClick={() => setModalProduct(product)}
+                          aria-label={`Show parts for ${product.name}`} // Provides a clear label for screen readers
+                        >
+                          Show Parts
+                        </button>
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <button
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          onClick={() => setConfirmDeleteId(product.id)}
+                          disabled={isDeleting === product.id}
+                          aria-label={`Delete sold product ${product.name}`} // Adds context for screen readers
+                        >
+                          {isDeleting === product.id ? (
+                            <div
+                              className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
+                              aria-hidden="true" // Prevents unnecessary screen reader announcement
+                            ></div>
+                          ) : null}
+                          {isDeleting === product.id ? "Deleting..." : "🗑️ Delete"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center text-gray-500 py-4">
+                      No sold products available.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

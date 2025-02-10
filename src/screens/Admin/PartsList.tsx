@@ -48,6 +48,8 @@ const PartsList = () => {
 
   // Filter by type
   const filteredParts = useMemo(() => {
+    if (!Array.isArray(parts)) return [];
+
     let result = selectedType ? parts.filter((part) => part.typeProduct === selectedType) : parts;
 
     if (priceOrder) {
@@ -65,8 +67,11 @@ const PartsList = () => {
   );
 
   const currentParts = useMemo(() => {
-    const indexOfLastItem = currentPage * itemsPerPage;
+    if (!Array.isArray(filteredParts) || filteredParts.length === 0) return [];
+
+    const indexOfLastItem = Math.min(currentPage * itemsPerPage, filteredParts.length);
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
     return filteredParts.slice(indexOfFirstItem, indexOfLastItem);
   }, [filteredParts, currentPage, itemsPerPage]);
 
@@ -112,7 +117,10 @@ const PartsList = () => {
   }, []);
 
   // Save product types
-  const productTypes = useMemo(() => [...new Set(parts.map((part) => part.typeProduct))], [parts]);
+  const productTypes = useMemo(
+    () => [...new Set((Array.isArray(parts) ? parts : []).map((part) => part.typeProduct))],
+    [parts]
+  );
 
   const handleOpenModal = (part: Part | null = null) => {
     if (part) {
@@ -264,45 +272,53 @@ const PartsList = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentParts.map((part) => (
-                  <tr key={part.id} className="text-center" role="row">
-                    <td className="border border-gray-300 px-4 py-2">{part.id}</td>
-                    <td className="border border-gray-300 px-4 py-2">{part.typeProduct}</td>
-                    <td className="border border-gray-300 px-4 py-2">{part.category}</td>
-                    <td className="border border-gray-300 px-4 py-2">{part.value}</td>
-                    <td className="border border-gray-300 px-4 py-2">{part.quantity}</td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {Number(part.price).toFixed(2)} €
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      {part.isAvailable ? "✅" : "❌"}
-                    </td>
-                    <td className="border border-gray-300 px-4 py-2">
-                      <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
-                        onClick={() => handleOpenModal(part)}
-                        aria-label={`Edit part ${part.value}`} //Added aria-label for clarity
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                        onClick={() => setConfirmDeleteId(part.id)}
-                        disabled={isDeleting === part.id}
-                        aria-label={`Delete part ${part.value}`} //Added aria-label for deletion
-                      >
-                        {isDeleting === part.id ? (
-                          <div
-                            className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
-                            aria-hidden="true" // Added aria-hidden to avoid unnecessary screen reader announcements
-                          ></div>
-                        ) : (
-                          "🗑️ Delete"
-                        )}
-                      </button>
+                {currentParts.length > 0 ? (
+                  currentParts.map((part) => (
+                    <tr key={part.id} className="text-center" role="row">
+                      <td className="border border-gray-300 px-4 py-2">{part.id}</td>
+                      <td className="border border-gray-300 px-4 py-2">{part.typeProduct}</td>
+                      <td className="border border-gray-300 px-4 py-2">{part.category}</td>
+                      <td className="border border-gray-300 px-4 py-2">{part.value}</td>
+                      <td className="border border-gray-300 px-4 py-2">{part.quantity}</td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {Number(part.price).toFixed(2)} €
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        {part.isAvailable ? "✅" : "❌"}
+                      </td>
+                      <td className="border border-gray-300 px-4 py-2">
+                        <button
+                          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+                          onClick={() => handleOpenModal(part)}
+                          aria-label={`Edit part ${part.value}`} //Added aria-label for clarity
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          onClick={() => setConfirmDeleteId(part.id)}
+                          disabled={isDeleting === part.id}
+                          aria-label={`Delete part ${part.value}`} //Added aria-label for deletion
+                        >
+                          {isDeleting === part.id ? (
+                            <div
+                              className="w-5 h-5 border-4 border-white border-t-transparent rounded-full animate-spin mr-2"
+                              aria-hidden="true" // Added aria-hidden to avoid unnecessary screen reader announcements
+                            ></div>
+                          ) : (
+                            "🗑️ Delete"
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center text-gray-500 py-4">
+                      No parts available now.
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
             {/* Confirm modal in deletion */}

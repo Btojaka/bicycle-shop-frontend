@@ -1,11 +1,11 @@
 # 🏄 Bicycle Shop - Frontend
 
-This is the frontend of the **Bicycle Shop** application, built with **React (Vite) and TypeScript**. It allows users to browse and purchase bicycle-related products while administrators can manage the product catalog.
+This is the frontend of the **Bicycle Shop** application, built with **React (Vite) and TypeScript**. It allows users to browse and purchase bicycle-related products while administrators can manage the product and parts catalog.
 
 ## 🚀 Live Demo
 
 The application is deployed at:  
-🔗 [Bicycle Shop - Frontend](https://tuusuario.github.io/bicycle-shop-frontend/)
+🔗 [Bicycle Shop - Frontend](https://btojaka.github.io/bicycle-shop-frontend/)
 
 ## 📦 Tech Stack
 
@@ -14,6 +14,7 @@ The application is deployed at:
 - **Zustand** (State Management)
 - **React Router** (Navigation)
 - **Axios** (API Calls)
+- **WebSockets** (Real-time Communication)
 - **Vitest + Testing Library** (Unit & Integration Testing)
 - **Tailwind CSS** (Styling)
 - **ESLint & Prettier** (Code Linting & Formatting)
@@ -41,7 +42,11 @@ npm install
 npm run dev
 ```
 
-The app will be available at **http://localhost:5173/**.
+The app will be available at http://localhost:5173/bicycle-shop-frontend/
+
+### ℹ️ No environment variables needed
+
+The project does not require a .env file since it directly points to the backend in the Vite config.
 
 ---
 
@@ -51,14 +56,14 @@ This frontend interacts with the **Bicycle Shop Backend**, available at:
 
 🔗 **Backend Repository:** [Bicycle Shop - Backend](https://github.com/Btojaka/bicycle-shop-backend)  
 🛄️ **Database:** Hosted on **Railway**  
-🛡️ **API Base URL:** `http://localhost:4000`  
-📝 **API Documentation:** `http://localhost:4000/docs`
-
-I have added a small sample of testing, follow the setup instructions in the backend repository.
+🛡️ **API Base URL:** `https://bicycle-shop-backend-jqz7.onrender.com/api/products`
+📝 **API Documentation:** `https://bicycle-shop-backend-jqz7.onrender.com/docs`
 
 ---
 
 ## ✅ Testing
+
+I have added a small sample of testing, follow the setup instructions in the backend repository.
 
 ### Run Unit & Integration Tests
 
@@ -68,120 +73,150 @@ npm run test
 
 ---
 
+## 📂 Project Structure
+
+```plaintext
+
+📦 src
+ ┣ 📂 api             # API calls and services
+ ┣ 📂 assets          # Static assets (images, icons, etc.)
+ ┣ 📂 components      # Reusable UI components
+ ┣ 📂 helpers         # Utility functions and custom hooks
+ ┣ 📂 screens         # Page-level components
+ ┃ ┣ 📂 Admin         # Admin dashboard views
+ ┃ ┣ 📂 Clients       # Client-facing views
+ ┣ 📂 store           # State management (Zustand)
+ ┣ 📂 test            # Unit and integration tests
+ ┣ 📜 App.css         # Global styles
+ ┣ 📜 App.tsx         # Main App component
+ ┣ 📜 index.css       # Base CSS styles
+ ┣ 📜 index.html      # Entry HTML file
+ ┣ 📜 main.tsx        # Main entry point for React
+ ┣ 📜 vite-env.d.ts   # Vite environment types
+ ┣ 📜 README.md       # Project documentation
+
+
+```
+
 ## ⚖️ Trade-offs and Development Decisions
 
-### 1️⃣ **Zustand instead of Redux**
+### **State Management: Zustand instead of Redux**
 
-- Chose Zustand over Redux due to its **simpler API and lightweight nature**.
-- Redux would offer more scalability but would require more boilerplate.
+- Chose **Zustand** due to its **simpler API and lightweight nature**.
+- Redux offers more scalability but requires more boilerplate.
 
-### 2️⃣ **Vitest instead of Jest**
+### **Testing: Vitest instead of Jest**
 
-- Since the project uses **Vite**, Vitest was chosen for better integration and speed.
+- Since the project uses **Vite**, **Vitest** was chosen for better integration and speed.
 
-### 3️⃣ **Real-Time Updates with Socket.IO**
+### **Real-Time Updates: WebSockets with Socket.IO**
 
 - Enables **real-time product updates**.
-- Trade-off: Requires **handling socket events carefully** to avoid unnecessary re-renders.
+- **Trade-off:** Requires **careful event handling** to avoid unnecessary re-renders.
 
-### 4️⃣ **API Calls with Axios**
+### **API Handling: Axios for API Calls**
 
-- Chose Axios for **better error handling and interceptors**.
-- API base URL is dynamically configured with **environment variables**.
+- Chose **Axios** for **better error handling and built-in interceptors**.
+- API base URL is **configured dynamically** via Vite’s configuration (no `.env` file needed).
 
-### 5️⃣ **Accessibility Improvements**
+### **Accessibility Enhancements**
 
-- **ARIA roles and labels** for screen reader support.
-- **Live announcements** for loading states and real-time updates.
+- Implemented **ARIA roles and labels** for screen reader support.
+- Added **live announcements** for loading states and real-time updates.
 
 ---
 
 ## 🎯 Key Challenges and Solutions
 
-### **1️⃣ Lag in Product Loading**
+### **1️⃣ Performance Optimization: Lag in Product Loading**
 
-- **Problem:** When navigating, there was noticeable lag when loading products or parts.
+- **Problem:** Noticeable lag when filtering or navigating between products.
 - **Solution:** Used **`useMemo`** and **`React.memo`** to optimize filtering and sorting.
 
-### **2️⃣ Real-Time Product Updates**
+### **2️⃣ Real-Time Data: Product Updates**
 
-- **Problem:** Changes in product availability and attributes were not reflected immediately.
-- **Solution:** Integrated **WebSockets (Socket.IO)** to handle real-time updates efficiently.
+- **Problem:** Product availability and attributes were not updating instantly.
+- **Solution:** Integrated **WebSockets (Socket.IO)** to enable real-time updates efficiently.
 
-### **3️⃣ Managing State with Zustand**
+### **3️⃣ State Management Efficiency**
 
-- **Problem:** Redux would have required unnecessary complexity for a small application.
-- **Solution:** Zustand provided a **simpler, more modular** state management approach.
+- **Problem:** Redux would introduce unnecessary complexity for this project.
+- **Solution:** Used **Zustand** for a **simpler, modular** state management approach.
 
 ### **4️⃣ Component Reusability**
 
-- **Solution:** Created reusable components like **Filters** and **Modals** to keep code DRY.
+- **Solution:** Created reusable components such as **Filters** and **Modals** to follow DRY principles.
 
-### **5️⃣ Dynamic Restrictions**
+### **5️⃣ Dynamic Product Restrictions**
 
-- **Problem:** Certain product configurations needed restrictions based on other selections.
-- **Solution:** Updated the backend to support **dynamic validation rules** for product restrictions.
+- **Problem:** Certain configurations required dynamic constraints based on user selections.
+- **Solution:** Backend was updated to support **dynamic validation rules** for product restrictions.
 
 ### **6️⃣ Dynamic Filters**
 
-- **Solution:** Implemented flexible **filtering mechanisms** to support different product types and attributes.
+- **Problem:** The administrator might want to expand the store to sell products beyond bicycles in the future.
+- **Solution:** Implemented **a dynamic and flexible filtering system** to accommodate new product types without requiring code changes.
 
-This ensures a **fast, responsive**, and **user-friendly** application.
+### **7️⃣ Preventing Crashes from Undefined or Empty Data**
 
----
+- **Problem:** Some components were crashing when API responses returned `undefined` or empty values.
+- **Solution:** Implemented **defensive programming** by ensuring:
+  - Default values for missing data (`?? ''` or `{}` where applicable).
+  - Conditional rendering (`data ? <Component /> : <Fallback />`).
+  - Handling optional chaining (`data?.attribute`).
 
-# 🏄 Bicycle Shop - Frontend (Español)
-
-Este es el frontend de la aplicación **Bicycle Shop**, desarrollada con **React (Vite) y TypeScript**. Permite a los usuarios explorar y comprar productos relacionados con bicicletas, mientras que los administradores pueden gestionar el catálogo de productos.
-
-## 🚀 Demo en Vivo
-
-_Se planea desplegar la aplicación usando GitHub Pages._
-
-## 📦 Tecnologías Utilizadas
-
-- **React + Vite** (Frontend)
-- **TypeScript** (Tipado Estático)
-- **Zustand** (Gestión de Estado)
-- **React Router** (Navegación)
-- **Axios** (Llamadas a API)
-- **Vitest + Testing Library** (Pruebas Unitarias e Integración)
-- **Tailwind CSS** (Estilización)
-- **ESLint & Prettier** (Linting y Formateo de Código)
-
-## ⚖️ Decisiones de Desarrollo y Trade-offs
-
-### **1️⃣ Manejo del Lag en la Carga de Productos**
-
-- **Problema:** Al navegar, la carga de productos o partes tenía retrasos.
-- **Solución:** Se usaron **`useMemo`** y **`React.memo`** para optimizar los filtros y la carga.
-
-### **2️⃣ Actualizaciones en Tiempo Real**
-
-- **Problema:** Los cambios en disponibilidad y atributos de los productos no se reflejaban de inmediato.
-- **Solución:** Se implementaron **WebSockets (Socket.IO)** para actualizar la interfaz en tiempo real.
-
-### **3️⃣ Gestión del Estado con Zustand**
-
-- **Problema:** Redux era demasiado complejo para esta aplicación.
-- **Solución:** Se usó Zustand para una gestión de estado más simple y modular.
-
-### **4️⃣ Componentes Reutilizables**
-
-- **Solución:** Se crearon componentes reutilizables como **Filtros** y **Modales**.
-
-### **5️⃣ Restricciones Dinámicas**
-
-- **Problema:** Se necesitaban restricciones en las configuraciones de productos.
-- **Solución:** Se modificó el backend para admitir **reglas de validación dinámicas**.
-
-### **6️⃣ Filtros Dinámicos**
-
-- **Solución:** Se implementaron mecanismos flexibles de **filtrado** para soportar diferentes tipos de productos.
-
-Esto garantiza una aplicación **rápida, responsiva** y **amigable para el usuario**.
+This approach ensures a **fast, responsive, crash-free**, and **user-friendly** application. 🚀
 
 ---
 
-🔗 **Repositorio Frontend:** [Bicycle Shop - Frontend](https://github.com/Btojaka/bicycle-shop-frontend)  
-🔗 **Repositorio Backend:** [Bicycle Shop - Backend](https://github.com/Btojaka/bicycle-shop-backend)
+## 🚀 Future Improvements
+
+### **1️⃣ Enhance Real-Time Features**
+
+- Implement **optimistic updates** to improve perceived performance.
+- Add **real-time notifications** for stock changes or promotions.
+
+### **2️⃣ Improve Performance and Scalability**
+
+- Implement **pagination or infinite scrolling** for large product catalogs.
+- Optimize WebSocket event handling to **reduce unnecessary updates**.
+
+### **3️⃣ Better User Experience & Accessibility**
+
+- Add **dark mode support** for improved UX.
+- Enhance **keyboard navigation** and refine ARIA attributes.
+- **Include product images** in both the **admin panel** and **customer store** for a better user experience.
+
+### **4️⃣ More Advanced Filtering & Sorting**
+
+- Allow users to **save filters** for future sessions.
+- Add **multi-category filtering** to refine searches more effectively.
+
+### **5️⃣ Admin Panel Enhancements**
+
+- Develop an **admin dashboard** for managing inventory and orders.
+- Integrate **bulk import/export features** for product data.
+- Implement **accounting tools**, including revenue tracking, special offers, discounts, and sales statistics.
+- Display **best-selling product combinations**, featured products, and active promotions to customers.
+- Add a **newsletter system** for communication with registered users.
+
+### **6️⃣ Authentication & User Accounts**
+
+- Implement **optional user authentication** to allow:
+  - Saving favorite products.
+  - Storing past purchases.
+  - Personalized recommendations.
+
+### **7️⃣ Improve Test Coverage**
+
+- Expand **end-to-end (E2E) testing** with Cypress or Playwright.
+- Increase **unit test coverage** across the entire app to reach **65-80% minimum**.
+
+🔗 **Frontend Repository:** [Bicycle Shop - Frontend](https://github.com/Btojaka/bicycle-shop-frontend)  
+🔗 **Backend Repository:** [Bicycle Shop - Backend](https://github.com/Btojaka/bicycle-shop-backend)
+
+## 📌 Autor
+
+🚀 _Desarrollado por \*\*[Btojaka](https://github.com/Btojaka)_
+
+## 🙌 Thanks for reading!
